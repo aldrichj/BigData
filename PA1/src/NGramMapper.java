@@ -5,14 +5,13 @@
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.Mapper;
 
-public class NGramMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
+public class NGramMapper  extends Mapper<NullWritable, BytesWritable, Text, IntWritable> {
 
-    private static final int MISSING = 9999;
+
     private static  String delim = "[ ]+";
     private String author = null;
     private int year;
@@ -20,13 +19,16 @@ public class NGramMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 
 
     @Override
-    public void map(LongWritable key, Text value, Context context)
+    public void map(NullWritable key, BytesWritable value, Context context)
             throws IOException, InterruptedException {
 
         String line = value.toString();
         String[] tokens = line.split(delim);
 
+        Configuration conf = context.getConfiguration();
+        String param = conf.get("N");
 
+        int N = Integer.parseInt(param);
 
 
 
@@ -47,7 +49,7 @@ public class NGramMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 
         if(headerFlag){
 
-            ArrayList<String> ngrams = nGrams(1,line);
+            ArrayList<String> ngrams = nGrams(N,line);
             for (String word : ngrams) {
                 context.write(new Text(word), new IntWritable(year));
             }
@@ -61,17 +63,15 @@ public class NGramMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 
     private ArrayList<String> nGrams(int n, String line){
         String[] tok = line.split("\\s+");
-        ArrayList<String> ngrams = new ArrayList<String>();
+        ArrayList<String> ngrams = new ArrayList<>();
 
         for(int i=0; i<(tok.length-n+1); i++) {
             String s = "";
             int start = i;
             int end = i + n;
 
-            for (int j = start; j < end; j++) {
-                s = s + "" + tok[j];
-            }
-            //Add n-gram to a list
+            for (int j = start; j < end; j++) s = s + "" + tok[j];
+            /* Add n-gram to a list */
             ngrams.add(s);
         }
 
