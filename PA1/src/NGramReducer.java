@@ -15,11 +15,19 @@ public class NGramReducer   extends Reducer<Text, IntWritable, Text, IntWritable
                        Context context)
             throws IOException, InterruptedException {
 
-        int maxValue = Integer.MIN_VALUE;
+
+
+        System.out.println("----------------------------------------- Reducer---------------------------------------------------------------");
+
+
+        int sum = 0;
         for (IntWritable value : values) {
-            maxValue = Math.max(maxValue, value.get());
+            sum += value.get();
         }
-        context.write(key, new IntWritable(maxValue));
+
+        context.write(key, new IntWritable(sum));
+
+
     }
 
 

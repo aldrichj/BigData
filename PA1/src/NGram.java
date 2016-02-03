@@ -14,8 +14,8 @@ public class NGram {
 
     public static void main(String[] args) throws Exception {
 
-        if (args.length != 3) {
-            System.out.printf("Usage: ProcessLogs <input dir> <output dir> <number of grams>: Default 1\n");
+        if (args.length != 4) {
+            System.out.printf("Usage: ProcessLogs <input dir> <output dir> <number of grams> <Sort by a|y>\n");
             System.exit(-1);
         }
 
@@ -28,10 +28,14 @@ public class NGram {
             }
         }
 
+        if(!args[3].equals("a") || !args[3].equals("y") )
+            System.err.println("Sort by option only accepts y (year) or a (author)");
+
 
 
         Configuration conf = new Configuration();
         conf.set("N", args[2]);
+        conf.set("sortby", args[3]);
         Job job = new Job(conf);
 
         job.setJarByClass(NGram.class);
