@@ -17,7 +17,7 @@ public class NGramReducer   extends Reducer<Text, IntWritable, Text, IntWritable
 
 
 
-        System.out.println("----------------------------------------- Reducer---------------------------------------------------------------");
+       // System.out.println("----------------------------------------- Reducer---------------------------------------------------------------");
 
 
         int sum = 0;
