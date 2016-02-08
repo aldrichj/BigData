@@ -5,51 +5,62 @@
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
 
-public class NGramReducer   extends Reducer<Text, IntWritable, Text, IntWritable> {
+public class NGramReducer   extends Reducer<Text, Text, Text, Text> {
 
     @Override
-    public void reduce(Text key, Iterable<IntWritable> values,
+    public void reduce(Text key, Iterable<Text> values,
                        Context context)
             throws IOException, InterruptedException {
 
 
 
-       //System.out.println("----------------------------------------- Reducer---------------------------------------------------------------");
-        Map map = new HashMap<>();
-        String tokens[] = null;
+        Map titles = new HashMap<>();
         int sum = 0;
-        int sumBooks = 0;
-        for (IntWritable value : values) {
-            sum += value.get();
-            tokens = key.toString().split("\\s+");
+        int bookSum = 0;
+        String total = "0";
+        String title = null;
 
-            String item = map.get(tokens[0]).toString();
 
-            if(item == null){
-                map.put(tokens[0],1);
 
-            }else{
+        for (Text value : values) {
+            String[] items = value.toString().split(",");
+            sum += Integer.parseInt(items[0]);
 
+            // Checks if title is already in map
+            // if the title is in the map then we know its a new volume.
+            title = getTitle(items);
+            if(!titles.containsKey(title)){
+                bookSum++;
+                titles.put(title,1);
             }
 
 
-
-
-
-            System.out.println(key);
         }
+        total = Integer.toString(sum);
 
-        context.write(key, new IntWritable(sum));
+        titles.clear();
+
+        context.write(key, new Text(total+" \t "+bookSum));
 
 
     }
 
 
+    private String getTitle(String[] items){
+
+        String title = items[2];
+
+        title = title.replace("$","");
+
+
+        return title;
+    }
 
 }

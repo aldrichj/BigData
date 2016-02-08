@@ -48,10 +48,13 @@ public class NGram {
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         job.setMapperClass(NGramMapper.class);
+
         job.setReducerClass(NGramReducer.class);
 
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(IntWritable.class);
+        job.setOutputValueClass(Text.class);
+
+
 
         boolean success = job.waitForCompletion(true);
         System.exit(success ? 0 : 1);
