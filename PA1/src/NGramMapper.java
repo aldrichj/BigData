@@ -1,4 +1,11 @@
 /**
+ * Parses through chunks sent in by HDFS. Each chunk should be 64MB or less.
+ * Each book should have the generic Project Gutenberg header.
+ *
+ * The basic structure of the program is we parse through the header first.
+ * Then parse through the remaining text sentence by sentence. During the parsing we are
+ * generating N-grams, and passing this information into HDFS to be fed to the reducer.
+ *
  * Created by Jeremy on 1/31/2016.
  */
 
@@ -22,7 +29,6 @@ public class NGramMapper  extends Mapper<NullWritable, BytesWritable, Text, Text
     private String author = null;
     private String year;
     private String title;
-    private boolean headerFlag = false;
 
 
     @Override
@@ -56,7 +62,7 @@ public class NGramMapper  extends Mapper<NullWritable, BytesWritable, Text, Text
             is = new ByteArrayInputStream(content);
             DataInputStream din = new DataInputStream(is);
             din.readFully(b);
-            // System.out.println("Data Recovered: "+new String(b));
+
             String tex = new String(b);
             Pattern endHeader = patternEndHeader();
             Pattern endBook = patternEndStory();
@@ -94,12 +100,19 @@ public class NGramMapper  extends Mapper<NullWritable, BytesWritable, Text, Text
                     if (!n.find()) {
                         // generates ngrams and returns an arraylist of them per sentence
                         // and also removes all punctuation
-                        ngrams = nGrams(N, reMatcher.group().toString().replaceAll("\\p{Punct}", ""));
+                        String sentence = reMatcher.group().toString().replaceAll(","," ");
+                        ngrams = nGrams(N, sentence.replaceAll("\\p{Punct}", ""));
 
 
                         for (String ng : ngrams) {
                             if (!ng.isEmpty()) {
-                                context.write(new Text(ng.toString() + "\t" + sortby), new Text("1, 1, "+title));                            }
+                                /**
+                                 * writes it out to a file to be shuffled and partitioned by HDFS
+                                 * then passed to the reducer.
+                                 * The arguments are word, <author | year>, in book count, unique volumes>
+                                 */
+                                context.write(new Text(ng.toString() + "\t" + sortby), new Text("1, 1, "+title));
+                            }
 
                         }
                     }
@@ -132,7 +145,7 @@ public class NGramMapper  extends Mapper<NullWritable, BytesWritable, Text, Text
         if(n > 1) {
             line = "_Start_ " + line + " _End_";
         }
-
+        line = line.replaceAll("\\n?\\r","");
         String[] tok = line.split("\\s+");
         ArrayList<String> ngrams = new ArrayList<>();
         boolean first = true;
@@ -154,11 +167,6 @@ public class NGramMapper  extends Mapper<NullWritable, BytesWritable, Text, Text
             /* Add n-gram to a list */
             ngrams.add(s.toLowerCase());
         }
-
-
-//        if(tok.length % n != 0){
-//            ngrams.add(tok[tok.length-1].toLowerCase()+" ");
-//        }
 
 
 
@@ -196,7 +204,7 @@ public class NGramMapper  extends Mapper<NullWritable, BytesWritable, Text, Text
         Pattern p = Pattern.compile(re1+re2,Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
         Matcher m = p.matcher(text);
         if(m.find()){
-            return text.substring(m.end()).trim();
+            return text.substring(m.end()).trim().replaceAll("[^A-Za-z ]", "");
         }
         return "Nan";
 
@@ -241,22 +249,22 @@ public class NGramMapper  extends Mapper<NullWritable, BytesWritable, Text, Text
 
 
                 if (tokens[i].contains("Title")) {
-                    System.out.println("Title Found!");
+                    //System.out.println("Title Found!");
                     title = findTitle(tokens[i].toString());
 
 
                 } else if (tokens[i].contains("Author:")) {
-                    System.out.println("Author Found!");
+                    //System.out.println("Author Found!");
                     String auth[] = findAuthor(tokens[i].toString()).split("\\s+");
 
                     author = auth[auth.length-1];
 
 
                 } else if (tokens[i].contains("Release Date")) {
-                    System.out.println("Year Found!");
+                    //System.out.println("Year Found!");
                     year = findYear(tokens[i].toString());
                     //System.out.println("Year: "+year);
-                    System.out.println(author+" "+year+" "+title);
+                   // System.out.println(author+" "+year+" "+title);
                     return new String[]{author, year, title};
                 }
 

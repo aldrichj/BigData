@@ -1,4 +1,7 @@
 /**
+ * Counts the number of times a key pair occurs. So, if we sort by author the keypair will consist of <word,author>
+ * Since this is a composite key. HDFS will have already combined like key pairs and will give us the count.
+ * So in this program we are counting the number unique books this these words occur in.
  * Created by Jeremy on 1/31/2016.
  */
 
@@ -13,6 +16,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 
 public class NGramReducer   extends Reducer<Text, Text, Text, Text> {
+
 
     @Override
     public void reduce(Text key, Iterable<Text> values,
@@ -34,7 +38,7 @@ public class NGramReducer   extends Reducer<Text, Text, Text, Text> {
             sum += Integer.parseInt(items[0]);
 
             // Checks if title is already in map
-            // if the title is in the map then we know its a new volume.
+            // if the title is not in the map then we know its a new volume.
             title = getTitle(items);
             if(!titles.containsKey(title)){
                 bookSum++;

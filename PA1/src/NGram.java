@@ -28,8 +28,8 @@ public class NGram {
             }
         }
 
-        if(!args[3].equals("a") || !args[3].equals("y") )
-            System.err.println("Sort by option only accepts y (year) or a (author)");
+//        if(!args[3].equals("a") || !args[3].equals("y") )
+//            System.err.println("Sort by option only accepts y (year) or a (author)");
 
 
 
